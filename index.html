@@ -264,6 +264,17 @@
             animation: slideUp 0.4s ease;
         }
 
+        .contexto {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            background: rgba(67, 97, 238, 0.03);
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            border-left: 3px solid var(--primary-light);
+            font-style: italic;
+        }
+
         .hidden { display: none !important; }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -354,6 +365,7 @@
                             <span class="badge tag-blue" id="moduloBadge">Módulo</span>
                             <span class="card-number" id="cardNumberFront">#1</span>
                         </div>
+                        <div id="contexto" class="contexto hidden"></div>
                         <div class="question-text" id="enunciado"></div>
                         <div class="options-list" id="opciones"></div>
                         <button class="btn btn-primary" onclick="verificarRespuesta()" style="margin-top: auto;">
@@ -583,6 +595,15 @@
                 m.textContent = flashcard.modulo;
             });
             
+            // Contexto
+            const contextoDiv = document.getElementById('contexto');
+            if (flashcard.contexto && flashcard.contexto.trim()) {
+                contextoDiv.textContent = flashcard.contexto;
+                contextoDiv.classList.remove('hidden');
+            } else {
+                contextoDiv.classList.add('hidden');
+            }
+
             // Enunciado
             document.getElementById('enunciado').textContent = flashcard.enunciado;
             
