@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#4361ee">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-512.png">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <title>Flashcards Pro | Sistema de Estudio Inteligente</title>
+    
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #4895ef;
+            --primary-dark: #3f37c9;
+            --secondary: #4cc9f0;
+            --accent: #f72585;
+            --success: #06d6a0;
+            --error: #ef476f;
+            --warning: #ffd166;
+            --bg-main: #f8f9fa;
+            --bg-card: rgba(255, 255, 255, 0.9);
+            --bg-header: rgba(255, 255, 255, 0.8);
+            --text-main: #2b2d42;
+            --text-muted: #8d99ae;
+            --glass-border: rgba(255, 255, 255, 0.3);
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+            --radius: 16px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        [data-theme="dark"] {
+            --bg-main: #0b090a;
+            --bg-card: rgba(22, 26, 29, 0.9);
+            --bg-header: rgba(22, 26, 29, 0.8);
+            --text-main: #f8f9fa;
+            --text-muted: #adb5bd;
+            --glass-border: rgba(255, 255, 255, 0.05);
+            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-main);
+            color: var(--text-main);
+            line-height: 1.6;
+            transition: var(--transition);
+            min-height: 100vh;
+        }
+
+        .glass {
+            background: var(--bg-card);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow);
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-header);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .theme-toggle {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: none;
+            background: var(--bg-card);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: var(--transition);
+            box-shadow: var(--shadow);
+        }
+
+        .theme-toggle:hover {
+            transform: rotate(15deg) scale(1.1);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .stat-card {
+            padding: 1.5rem;
+            border-radius: var(--radius);
+            text-align: center;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card:hover { transform: translateY(-5px); }
+
+        .stat-icon { font-size: 1.5rem; margin-bottom: 0.5rem; opacity: 0.8; }
+
+        .stat-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value { font-size: 2.2rem; font-weight: 700; color: var(--primary); }
+
+        .filter-section {
+            margin-bottom: 2.5rem;
+            padding: 1.5rem;
+            border-radius: var(--radius);
+        }
+
+        .filter-label { font-weight: 600; margin-bottom: 1rem; display: block; color: var(--text-muted); }
+
+        select {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            border: 2px solid transparent;
+            background: var(--bg-main);
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1.5rem center;
+        }
+
+        select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(67, 97, 238, 0.1); }
+
+        .btn-group { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 1rem; margin-top: 2rem; }
+
+        .btn {
+            padding: 1rem 1.5rem;
+            border-radius: 14px;
+            border: none;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: var(--transition);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            box-shadow: 0 10px 20px -10px var(--primary);
+        }
+
+        .btn-primary:hover { transform: scale(1.02); box-shadow: 0 15px 30px -10px var(--primary); }
+
+        .btn-secondary { background: var(--bg-card); color: var(--text-main); border: 1px solid var(--glass-border); }
+
+        .study-screen { display: none; animation: fadeIn 0.5s ease; }
+
+        .study-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+
+        .progress-container { flex: 1; margin: 0 2rem; height: 8px; background: var(--glass-border); border-radius: 10px; overflow: hidden; }
+
+        .progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--primary), var(--secondary)); transition: width 0.5s ease; }
+
+        .flashcard {
+            background: var(--bg-card);
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: var(--shadow);
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--glass-border);
+        }
+
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+
+        .card-number { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); }
+
+        .badge { padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; color: white; text-transform: uppercase; }
+
+        .enunciado { font-size: 1.3rem; font-weight: 700; margin-bottom: 2rem; line-height: 1.4; }
+
+        .opciones { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2rem; }
+
+        .opcion {
+            padding: 1.2rem;
+            border-radius: 16px;
+            border: 2px solid var(--glass-border);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .opcion:hover { border-color: var(--primary); background: rgba(67, 97, 238, 0.05); }
+
+        .opcion.selected { border-color: var(--primary); background: rgba(67, 97, 238, 0.1); }
+
+        .opcion.correcta { background: var(--success); color: white; border-color: var(--success); }
+
+        .opcion.incorrecta { background: var(--error); color: white; border-color: var(--error); }
+
+        .justificacion {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background: rgba(67, 97, 238, 0.05);
+            border-radius: 16px;
+            border-left: 4px solid var(--secondary);
+            animation: slideUp 0.4s ease;
+        }
+
+        .hidden { display: none !important; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        @media (max-width: 768px) {
+            .btn-group { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .study-header { flex-direction: column; gap: 1rem; }
+            .progress-container { margin: 0; width: 100%; }
+        }
+    </style>
+
+</head>
+<body>
+    <header class="glass">
+        <div class="logo">
+            <span class="stat-icon">⚡</span>
+            <h1>Flashcards Pro</h1>
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">
+            🌙
+        </button>
+    </header>
+
+    <main class="container">
+        <!-- PANTALLA INICIAL (DASHBOARD) -->
+        <section id="homeScreen" class="animate-in">
+            <div class="stats-grid">
+                <div class="stat-card glass">
+                    <div class="stat-icon">📚</div>
+                    <div class="stat-label">Disponibles</div>
+                    <div class="stat-value" id="totalPreguntas">0</div>
+                </div>
+                <div class="stat-card glass">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-label">Estudiadas</div>
+                    <div class="stat-value" id="preguntasEstudiadas">0</div>
+                </div>
+                <div class="stat-card glass">
+                    <div class="stat-icon">📈</div>
+                    <div class="stat-label">Aciertos</div>
+                    <div class="stat-value" id="porcentajeAciertos">0%</div>
+                </div>
+                <div class="stat-card glass">
+                    <div class="stat-icon">📌</div>
+                    <div class="stat-label">Marcadas</div>
+                    <div class="stat-value" id="marcadasRepasar">0</div>
+                </div>
+            </div>
+
+            <div class="filter-section glass">
+                <label class="filter-label">Seleccionar Categoría</label>
+                <select id="filtroModulo" onchange="aplicarFiltro()">
+                    <option value="todos">Todos los Módulos</option>
+                </select>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="iniciarEstudio()">
+                    <span>🚀</span>
+                    <span id="btnIniciarTexto">Iniciar Sesión</span>
+                </button>
+                <button class="btn btn-secondary" onclick="reiniciarProgreso()">
+                    <span>🔄</span>
+                    <span>Reiniciar</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- PANTALLA DE ESTUDIO -->
+        <section id="studyScreen" class="study-screen">
+            <div class="study-header">
+                <button class="btn-secondary btn" onclick="volverInicio()" style="padding: 0.5rem 1rem;">
+                    🏠 Inicio
+                </button>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                <span class="card-number" id="cardCounter">1 / 10</span>
+            </div>
+
+            <div class="flashcard-container">
+                <div class="flashcard-inner" id="cardInner">
+                    <!-- FRENTE: PREGUNTA -->
+                    <div class="card-face card-front glass">
+                        <div class="card-header">
+                            <span class="badge tag-blue" id="moduloBadge">Módulo</span>
+                            <span class="card-number" id="cardNumberFront">#1</span>
+                        </div>
+                        <div class="question-text" id="enunciado"></div>
+                        <div class="options-list" id="opciones"></div>
+                        <button class="btn btn-primary" onclick="verificarRespuesta()" style="margin-top: auto;">
+                            Confirmar Respuesta
+                        </button>
+                    </div>
+
+                    <!-- REVERSO: RESULTADO -->
+                    <div class="card-face card-back glass">
+                        <div class="card-header">
+                            <span class="badge tag-green" id="moduloBadgeBack">Módulo</span>
+                            <span class="card-number" id="cardNumberBack">#1</span>
+                        </div>
+                        <div id="resultadoContainer"></div>
+                        <div class="justificacion" id="justificacionBox">
+                            <strong>💡 Explicación:</strong>
+                            <p id="justificacionTexto" style="margin-top: 0.5rem;"></p>
+                        </div>
+                        <div class="btn-group" style="margin-top: auto;">
+                            <button class="btn btn-primary" onclick="siguientePregunta()">Siguiente</button>
+                            <button class="btn btn-secondary" onclick="marcarParaRepasar()">📌 Marcar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // ================================
+        // VARIABLES GLOBALES
+        // ================================
+        let flashcards = [];
+        let flashcardsActuales = [];
+        let indiceActual = 0;
+        let respuestaSeleccionada = null;
+        let progreso = {
+            vistas: [],
+            correctas: [],
+            incorrectas: [],
+            marcadas: []
+        };
+
+        // ================================
+        // INICIALIZACIÓN
+        // ================================
+        window.onload = function() {
+            cargarProgreso();
+            cargarFlashcards();
+            aplicarTemaGuardado();
+            
+            // Prevenir zoom en doble tap (iOS)
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', function(event) {
+                const now = Date.now();
+                if (now - lastTouchEnd <= 300) {
+                    event.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, false);
+        };
+
+        // ================================
+        // CARGA LOCAL DE DATOS (preguntas.json)
+        // ================================
+        function cargarFlashcards() {
+            mostrarLoading(true);
+            
+            fetch('preguntas.json')
+                .then(response => {
+                    if (!response.ok) throw new Error('No se pudo cargar preguntas.json');
+                    return response.json();
+                })
+                .then(data => {
+                    // Convertir el array JSON al formato que espera la app
+                    const flashcardsConvertidas = data.map((item, index) => ({
+                        id: index + 1,
+                        fila: index + 1,
+                        modulo: item.modulo || item['Módulo/Categoría'] || '',
+                        competencia: item.competencia || item['Competencia/Afirmación'] || '',
+                        nivel: item.nivel || item['Nivel de Desempeño'] || '',
+                        contexto: item.contexto || item['Contexto'] || '',
+                        enunciado: item.enunciado || item['Enunciado'] || '',
+                        opcionA: item.opcionA || item['Opción A'] || '',
+                        opcionB: item.opcionB || item['Opción B'] || '',
+                        opcionC: item.opcionC || item['Opción C'] || '',
+                        opcionD: item.opcionD || item['Opción D'] || '',
+                        respuestaCorrecta: item.respuestaCorrecta || item['Respuesta Correcta'] || '',
+                        justificacion: item.justificacion || item['Justificación'] || '',
+                        totalAciertos: item.totalAciertos || item['Total_Aciertos'] || 0,
+                        estadoVisto: item.estadoVisto || item['Estado_Visto'] === 'Sí'
+                    }));
+                    
+                    procesarFlashcards(flashcardsConvertidas);
+                })
+                .catch(error => {
+                    mostrarLoading(false);
+                    console.error('Error cargando JSON:', error);
+                    mostrarError('No se pudo cargar preguntas.json. Asegúrate de que el archivo esté en la misma carpeta.');
+                });
+        }
+
+        function procesarFlashcards(flashcardsData) {
+            mostrarLoading(false);
+            
+            if (!flashcardsData || flashcardsData.length === 0) {
+                mostrarError('No hay flashcards válidas en el archivo JSON.');
+                return;
+            }
+            
+            flashcards = flashcardsData;
+            flashcardsActuales = [...flashcards];
+            
+            cargarModulosEnFiltro();
+            actualizarEstadisticas();
+            
+            mostrarExito(`✓ ${flashcards.length} flashcards cargadas`);
+            console.log('✓ Flashcards cargadas:', flashcards.length);
+        }
+
+        function cargarModulosEnFiltro() {
+            const filtro = document.getElementById('filtroModulo');
+            const modulosUnicos = [...new Set(flashcards.map(fc => fc.modulo))].filter(m => m);
+            
+            filtro.innerHTML = '<option value="todos">Todos los módulos</option>';
+            
+            modulosUnicos.sort().forEach(modulo => {
+                const option = document.createElement('option');
+                option.value = modulo;
+                option.textContent = modulo;
+                filtro.appendChild(option);
+            });
+        }
+
+        // ================================
+        // FILTROS
+        // ================================
+        function aplicarFiltro() {
+            const filtroSeleccionado = document.getElementById('filtroModulo').value;
+            
+            if (filtroSeleccionado === 'todos') {
+                flashcardsActuales = [...flashcards];
+            } else {
+                flashcardsActuales = flashcards.filter(fc => fc.modulo === filtroSeleccionado);
+            }
+            
+            actualizarEstadisticas();
+        }
+
+        // ================================
+        // ESTADÍSTICAS
+        // ================================
+        function actualizarEstadisticas() {
+            document.getElementById('totalPreguntas').textContent = flashcardsActuales.length;
+            document.getElementById('preguntasEstudiadas').textContent = progreso.vistas.length;
+            document.getElementById('marcadasRepasar').textContent = progreso.marcadas.length;
+            
+            const porcentaje = progreso.vistas.length > 0 
+                ? Math.round((progreso.correctas.length / progreso.vistas.length) * 100)
+                : 0;
+            document.getElementById('porcentajeAciertos').textContent = porcentaje + '%';
+            
+            const btnTexto = progreso.vistas.length > 0 ? 'Continuar Estudio' : 'Iniciar Estudio';
+            document.getElementById('btnIniciarTexto').textContent = btnTexto;
+        }
+
+        // ================================
+        // NAVEGACIÓN
+        // ================================
+        function iniciarEstudio() {
+            if (flashcardsActuales.length === 0) {
+                alert('No hay flashcards disponibles');
+                return;
+            }
+            document.getElementById('homeScreen').style.display = 'none';
+            document.getElementById('studyScreen').style.display = 'block';
+            indiceActual = 0;
+            mostrarFlashcard();
+        }
+
+        function volverInicio() {
+            document.getElementById('homeScreen').style.display = 'block';
+            document.getElementById('studyScreen').style.display = 'none';
+            actualizarEstadisticas();
+        }
+
+        function anteriorPregunta() {
+            if (indiceActual > 0) {
+                indiceActual--;
+                mostrarFlashcard();
+            }
+        }
+
+        function siguientePregunta() {
+            if (indiceActual < flashcardsActuales.length - 1) {
+                indiceActual++;
+                mostrarFlashcard();
+            } else {
+                alert('¡Has completado todas las flashcards! 🎉');
+                volverInicio();
+            }
+        }
+
+        // ================================
+        // MOSTRAR FLASHCARD
+        // ================================
+        function mostrarFlashcard() {
+            const flashcard = flashcardsActuales[indiceActual];
+            respuestaSeleccionada = null;
+            
+            // Resetear animación de la tarjeta
+            const cardInner = document.getElementById('cardInner');
+            cardInner.classList.remove('is-flipped');
+            
+            // Actualizar Contador
+            document.getElementById('cardCounter').textContent = `${indiceActual + 1} / ${flashcardsActuales.length}`;
+            document.getElementById('cardNumberFront').textContent = `#${flashcard.id}`;
+            document.getElementById('cardNumberBack').textContent = `#${flashcard.id}`;
+            
+            // Barra de progreso
+            const progresoPorcentaje = ((indiceActual + 1) / flashcardsActuales.length) * 100;
+            document.getElementById('progressBar').style.width = progresoPorcentaje + '%';
+            
+            // Badges
+            const modulos = [document.getElementById('moduloBadge'), document.getElementById('moduloBadgeBack')];
+            modulos.forEach(m => {
+                m.textContent = flashcard.modulo;
+            });
+            
+            // Enunciado
+            document.getElementById('enunciado').textContent = flashcard.enunciado;
+            
+            // Opciones
+            const opcionesDiv = document.getElementById('opciones');
+            opcionesDiv.innerHTML = '';
+            
+            ['A', 'B', 'C', 'D'].forEach(letra => {
+                const textoOpcion = flashcard['opcion' + letra];
+                if (textoOpcion && textoOpcion.trim()) {
+                    const btn = document.createElement('button');
+                    btn.className = 'opcion glass';
+                    btn.onclick = () => seleccionarOpcion(letra, btn);
+                    btn.innerHTML = `<strong>${letra}.</strong> <span>${textoOpcion}</span>`;
+                    btn.dataset.letra = letra;
+                    opcionesDiv.appendChild(btn);
+                }
+            });
+            
+            // Marcar como vista
+            if (!progreso.vistas.includes(flashcard.id)) {
+                progreso.vistas.push(flashcard.id);
+                guardarProgreso();
+            }
+        }
+
+        function seleccionarOpcion(letra, element) {
+            document.querySelectorAll('.opcion').forEach(op => op.classList.remove('selected'));
+            element.classList.add('selected');
+            respuestaSeleccionada = letra;
+        }
+
+        function verificarRespuesta() {
+            if (!respuestaSeleccionada) {
+                alert('Selecciona una opción antes de continuar');
+                return;
+            }
+            
+            const flashcard = flashcardsActuales[indiceActual];
+            const esCorrecta = respuestaSeleccionada === flashcard.respuestaCorrecta;
+            
+            // Preparar el reverso
+            const resContainer = document.getElementById('resultadoContainer');
+            resContainer.innerHTML = esCorrecta 
+                ? `<div style="text-align:center; color:var(--success); margin-bottom:1.5rem;">
+                    <div style="font-size:3rem;">✅</div>
+                    <h2>¡Correcto!</h2>
+                   </div>`
+                : `<div style="text-align:center; color:var(--error); margin-bottom:1.5rem;">
+                    <div style="font-size:3rem;">❌</div>
+                    <h2>Incorrecto</h2>
+                    <p>La respuesta era la <strong>${flashcard.respuestaCorrecta}</strong></p>
+                   </div>`;
+            
+            document.getElementById('justificacionTexto').textContent = flashcard.justificacion;
+            
+            // Actualizar progreso
+            if (esCorrecta && !progreso.correctas.includes(flashcard.id)) {
+                progreso.correctas.push(flashcard.id);
+            } else if (!esCorrecta && !progreso.incorrectas.includes(flashcard.id)) {
+                progreso.incorrectas.push(flashcard.id);
+            }
+            guardarProgreso();
+            
+            // Girar tarjeta
+            document.getElementById('cardInner').classList.add('is-flipped');
+        }
+
+        function marcarParaRepasar() {
+            const flashcard = flashcardsActuales[indiceActual];
+            if (progreso.marcadas.includes(flashcard.id)) {
+                progreso.marcadas = progreso.marcadas.filter(id => id !== flashcard.id);
+                alert('Flashcard desmarcada');
+            } else {
+                progreso.marcadas.push(flashcard.id);
+                alert('Flashcard marcada para repaso 📌');
+            }
+            guardarProgreso();
+            actualizarEstadisticas();
+        }
+
+        // ================================
+        // PERSISTENCIA Y UTILIDADES
+        // ================================
+        function guardarProgreso() { localStorage.setItem('flashcards_progreso', JSON.stringify(progreso)); }
+        
+        function cargarProgreso() {
+            const data = localStorage.getItem('flashcards_progreso');
+            if (data) progreso = JSON.parse(data);
+        }
+
+        function reiniciarProgreso() {
+            if (confirm('¿Reiniciar todo el progreso?')) {
+                progreso = { vistas: [], correctas: [], incorrectas: [], marcadas: [] };
+                guardarProgreso();
+                actualizarEstadisticas();
+                location.reload();
+            }
+        }
+
+        function toggleTheme() {
+            const isDark = document.body.getAttribute('data-theme') === 'dark';
+            const newTheme = isDark ? 'light' : 'dark';
+            document.body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('tema', newTheme);
+            document.getElementById('themeBtn').textContent = newTheme === 'dark' ? '☀️' : '🌙';
+        }
+
+        function aplicarTemaGuardado() {
+            const tema = localStorage.getItem('tema') || 'light';
+            document.body.setAttribute('data-theme', tema);
+            document.getElementById('themeBtn').textContent = tema === 'dark' ? '☀️' : '🌙';
+        }
+
+        function mostrarLoading(show) { /* Opcional: Implementar spinner */ }
+        function mostrarError(msg) { alert('Error: ' + msg); }
+        function mostrarExito(msg) { console.log(msg); }
+
+        // Eventos de Teclado
+        document.addEventListener('keydown', (e) => {
+            if (document.getElementById('studyScreen').style.display === 'block') {
+                if (e.key === 'Enter' || e.key === ' ') verificarRespuesta();
+                if (e.key === 'ArrowRight') siguientePregunta();
+            }
+        });
+
+        // Inicializar
+        window.onload = () => {
+            cargarProgreso();
+            cargarFlashcards();
+            aplicarTemaGuardado();
+
+            // Registro de Service Worker para PWA
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker registrado con éxito', reg))
+                    .catch(err => console.warn('Error al registrar Service Worker', err));
+            }
+        };
+    </script>
+</body>
+</html>
