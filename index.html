@@ -264,6 +264,34 @@
             animation: slideUp 0.4s ease;
         }
 
+        .timer-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            font-family: monospace;
+            font-weight: 600;
+            color: var(--primary-dark);
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(4px);
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn-pause {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            transition: var(--transition);
+        }
+
+        .btn-pause:hover { transform: scale(1.1); }
+
         .competencia {
             font-size: 0.75rem;
             font-weight: 600;
@@ -361,6 +389,10 @@
                 <button class="btn-secondary btn" onclick="volverInicio()" style="padding: 0.5rem 1rem;">
                     🏠 Inicio
                 </button>
+                <div class="timer-container">
+                    <span id="studyTimer">00:00</span>
+                    <button id="pauseTimerBtn" onclick="togglePause()" class="btn-pause">⏸️</button>
+                </div>
                 <div class="progress-container">
                     <div class="progress-bar" id="progressBar"></div>
                 </div>
@@ -419,6 +451,11 @@
             incorrectas: [],
             marcadas: []
         };
+        
+        // Timer Variables
+        let totalStudySeconds = 0;
+        let studyInterval = null;
+        let isTimerPaused = false;
 
         // ================================
         // INICIALIZACIÓN
@@ -554,13 +591,52 @@
             document.getElementById('homeScreen').style.display = 'none';
             document.getElementById('studyScreen').style.display = 'block';
             indiceActual = 0;
+            iniciarCronometro();
             mostrarFlashcard();
         }
 
         function volverInicio() {
             document.getElementById('homeScreen').style.display = 'block';
             document.getElementById('studyScreen').style.display = 'none';
+            detenerCronometro();
             actualizarEstadisticas();
+        }
+
+        function iniciarCronometro() {
+            detenerCronometro();
+            totalStudySeconds = 0;
+            isTimerPaused = false;
+            document.getElementById('pauseTimerBtn').textContent = '⏸️';
+            studyInterval = setInterval(() => {
+                if (!isTimerPaused) {
+                    totalStudySeconds++;
+                    actualizarDisplayCronometro();
+                }
+            }, 1000);
+        }
+
+        function detenerCronometro() {
+            if (studyInterval) clearInterval(studyInterval);
+        }
+
+        function togglePause() {
+            isTimerPaused = !isTimerPaused;
+            document.getElementById('pauseTimerBtn').textContent = isTimerPaused ? '▶️' : '⏸️';
+            const cardInner = document.getElementById('cardInner');
+            if (isTimerPaused) {
+                cardInner.style.opacity = '0.3';
+                cardInner.style.pointerEvents = 'none';
+            } else {
+                cardInner.style.opacity = '1';
+                cardInner.style.pointerEvents = 'auto';
+            }
+        }
+
+        function actualizarDisplayCronometro() {
+            const mins = Math.floor(totalStudySeconds / 60);
+            const secs = totalStudySeconds % 60;
+            document.getElementById('studyTimer').textContent = 
+                `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         }
 
         function anteriorPregunta() {
@@ -575,7 +651,10 @@
                 indiceActual++;
                 mostrarFlashcard();
             } else {
-                alert('¡Has completado todas las flashcards! 🎉');
+                detenerCronometro();
+                const totalMins = Math.floor(totalStudySeconds / 60);
+                const totalSecs = totalStudySeconds % 60;
+                alert(`¡Has completado todas las flashcards! 🎉\nTiempo total: ${totalMins}m ${totalSecs}s`);
                 volverInicio();
             }
         }
