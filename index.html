@@ -264,6 +264,16 @@
             animation: slideUp 0.4s ease;
         }
 
+        .competencia {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
         .contexto {
             font-size: 0.95rem;
             color: var(--text-muted);
@@ -365,6 +375,7 @@
                             <span class="badge tag-blue" id="moduloBadge">Módulo</span>
                             <span class="card-number" id="cardNumberFront">#1</span>
                         </div>
+                        <div id="competencia" class="competencia"></div>
                         <div id="contexto" class="contexto hidden"></div>
                         <div class="question-text" id="enunciado"></div>
                         <div class="options-list" id="opciones"></div>
@@ -594,6 +605,9 @@
             modulos.forEach(m => {
                 m.textContent = flashcard.modulo;
             });
+            
+            // Competencia
+            document.getElementById('competencia').textContent = flashcard.competencia;
             
             // Contexto
             const contextoDiv = document.getElementById('contexto');
