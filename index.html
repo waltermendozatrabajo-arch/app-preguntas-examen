@@ -202,16 +202,24 @@
         }
 
         .btn-primary:hover { transform: scale(1.02); box-shadow: 0 15px 30px -10px var(--primary); }
+        .btn-primary:active { transform: scale(0.95); background: linear-gradient(135deg, var(--primary-dark), var(--primary)); }
 
         .btn-secondary { background: var(--bg-card); color: var(--text-main); border: 1px solid var(--glass-border); }
+        .btn-secondary:active { transform: scale(0.95); background: var(--glass-border); }
 
         .study-screen { display: none; animation: fadeIn 0.5s ease; }
 
-        .study-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
-
-        .progress-container { flex: 1; margin: 0 2rem; height: 8px; background: var(--glass-border); border-radius: 10px; overflow: hidden; }
+        .study-header { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2rem; }
+        .study-header-top { display: flex; justify-content: space-between; align-items: center; width: 100%; gap: 10px; flex-wrap: wrap; }
+        .progress-container { width: 100%; height: 8px; background: var(--glass-border); border-radius: 10px; overflow: hidden; }
 
         .progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--primary), var(--secondary)); transition: width 0.5s ease; }
+
+        .flashcard-container { perspective: 1000px; }
+        .flashcard-inner { position: relative; width: 100%; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; min-height: 400px; }
+        .flashcard-inner.is-flipped { transform: rotateY(180deg); }
+        .card-face { backface-visibility: hidden; -webkit-backface-visibility: hidden; width: 100%; border-radius: 24px; padding: 2.5rem; }
+        .card-back { transform: rotateY(180deg); position: absolute; top: 0; left: 0; height: 100%; display: flex; flex-direction: column; }
 
         .flashcard {
             background: var(--bg-card);
@@ -321,9 +329,9 @@
         @media (max-width: 768px) {
             .btn-group { grid-template-columns: 1fr; }
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
-            .study-header { flex-direction: column; gap: 0.5rem; margin-bottom: 1rem; }
-            .progress-container { margin: 0; width: 100%; height: 6px; }
+            .study-header-top { flex-wrap: nowrap; justify-content: space-between; gap: 0.5rem; }
             .timer-container { padding: 0.3rem 0.8rem; font-size: 0.9rem; }
+            .card-face { padding: 1.5rem; }
         }
 
         @media (max-height: 700px) {
@@ -397,17 +405,19 @@
         <!-- PANTALLA DE ESTUDIO -->
         <section id="studyScreen" class="study-screen">
             <div class="study-header">
-                <button class="btn-secondary btn" onclick="volverInicio()" style="padding: 0.5rem 1rem;">
-                    🏠 Inicio
-                </button>
-                <div class="timer-container">
-                    <span id="studyTimer">00:00</span>
-                    <button id="pauseTimerBtn" onclick="togglePause()" class="btn-pause">⏸️</button>
+                <div class="study-header-top">
+                    <button class="btn-secondary btn" onclick="volverInicio()" style="padding: 0.5rem 1rem;">
+                        🏠 Inicio
+                    </button>
+                    <div class="timer-container">
+                        <span id="studyTimer">00:00</span>
+                        <button id="pauseTimerBtn" onclick="togglePause()" class="btn-pause">⏸️</button>
+                    </div>
+                    <span class="card-number" id="cardCounter">1 / 10</span>
                 </div>
                 <div class="progress-container">
                     <div class="progress-bar" id="progressBar"></div>
                 </div>
-                <span class="card-number" id="cardCounter">1 / 10</span>
             </div>
 
             <div class="flashcard-container">
@@ -438,9 +448,10 @@
                             <strong>💡 Explicación:</strong>
                             <p id="justificacionTexto" style="margin-top: 0.5rem;"></p>
                         </div>
-                        <div class="btn-group" style="margin-top: auto;">
-                            <button class="btn btn-primary" onclick="siguientePregunta()">Siguiente</button>
-                            <button class="btn btn-secondary" onclick="marcarParaRepasar()">📌 Marcar</button>
+                        <div class="btn-group" style="margin-top: auto; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                            <button class="btn btn-secondary" onclick="anteriorPregunta()" style="flex: 1;">⬅️ Atrás</button>
+                            <button class="btn btn-secondary" onclick="marcarParaRepasar()" style="flex: 1;">📌 Marcar</button>
+                            <button class="btn btn-primary" onclick="siguientePregunta()" style="flex: 2;">Siguiente ➡️</button>
                         </div>
                     </div>
                 </div>
@@ -654,6 +665,7 @@
             if (indiceActual > 0) {
                 indiceActual--;
                 mostrarFlashcard();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         }
 
@@ -661,6 +673,7 @@
             if (indiceActual < flashcardsActuales.length - 1) {
                 indiceActual++;
                 mostrarFlashcard();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             } else {
                 detenerCronometro();
                 const totalMins = Math.floor(totalStudySeconds / 60);
@@ -680,6 +693,10 @@
             // Resetear animación de la tarjeta
             const cardInner = document.getElementById('cardInner');
             cardInner.classList.remove('is-flipped');
+            
+            // Limpiar resultados anteriores
+            document.getElementById('resultadoContainer').innerHTML = '';
+            document.getElementById('justificacionTexto').textContent = '';
             
             // Actualizar Contador
             document.getElementById('cardCounter').textContent = `${indiceActual + 1} / ${flashcardsActuales.length}`;
@@ -752,14 +769,14 @@
             // Preparar el reverso
             const resContainer = document.getElementById('resultadoContainer');
             resContainer.innerHTML = esCorrecta 
-                ? `<div style="text-align:center; color:var(--success); margin-bottom:1.5rem;">
-                    <div style="font-size:3rem;">✅</div>
-                    <h2>¡Correcto!</h2>
+                ? `<div style="text-align:center; color:var(--success); margin-bottom:1rem;">
+                    <div style="font-size:1.8rem; margin-bottom:0.2rem;">✅</div>
+                    <h3 style="font-size: 1.2rem; margin:0;">¡Correcto!</h3>
                    </div>`
-                : `<div style="text-align:center; color:var(--error); margin-bottom:1.5rem;">
-                    <div style="font-size:3rem;">❌</div>
-                    <h2>Incorrecto</h2>
-                    <p>La respuesta era la <strong>${flashcard.respuestaCorrecta}</strong></p>
+                : `<div style="text-align:center; color:var(--error); margin-bottom:1rem;">
+                    <div style="font-size:1.8rem; margin-bottom:0.2rem;">❌</div>
+                    <h3 style="font-size: 1.2rem; margin:0;">Incorrecto</h3>
+                    <p style="font-size: 0.9rem; margin-top: 0.5rem;">La respuesta era la <strong>${flashcard.respuestaCorrecta}</strong></p>
                    </div>`;
             
             document.getElementById('justificacionTexto').textContent = flashcard.justificacion;
