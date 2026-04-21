@@ -38,8 +38,12 @@
             --bg-header: rgba(22, 26, 29, 0.8);
             --text-main: #f8f9fa;
             --text-muted: #adb5bd;
-            --glass-border: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.15);
             --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        [data-theme="dark"] select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23f8f9fa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
         }
 
         * {
@@ -253,6 +257,8 @@
             display: flex;
             align-items: center;
             gap: 1rem;
+            color: var(--text-main);
+            text-align: left;
         }
 
         .opcion:hover { border-color: var(--primary); background: rgba(67, 97, 238, 0.05); }
@@ -376,10 +382,11 @@
                     <div class="stat-label">Aciertos</div>
                     <div class="stat-value" id="porcentajeAciertos">0%</div>
                 </div>
-                <div class="stat-card glass">
+                <div class="stat-card glass" onclick="repasarMarcadas()" style="cursor: pointer; transition: transform 0.2s; border-color: var(--primary-light);">
                     <div class="stat-icon">📌</div>
                     <div class="stat-label">Marcadas</div>
                     <div class="stat-value" id="marcadasRepasar">0</div>
+                    <div style="font-size: 0.7rem; color: var(--primary-light); margin-top: 5px;">Toca para repasar</div>
                 </div>
             </div>
 
@@ -617,7 +624,22 @@
             mostrarFlashcard();
         }
 
+        function repasarMarcadas() {
+            if (progreso.marcadas.length === 0) {
+                alert('No tienes flashcards marcadas para repasar.');
+                return;
+            }
+            flashcardsActuales = flashcards.filter(fc => progreso.marcadas.includes(fc.id));
+            
+            document.getElementById('homeScreen').style.display = 'none';
+            document.getElementById('studyScreen').style.display = 'block';
+            indiceActual = 0;
+            iniciarCronometro();
+            mostrarFlashcard();
+        }
+
         function volverInicio() {
+            aplicarFiltro();
             document.getElementById('homeScreen').style.display = 'block';
             document.getElementById('studyScreen').style.display = 'none';
             detenerCronometro();
